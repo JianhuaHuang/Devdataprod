@@ -1,0 +1,83 @@
+---
+title       : CO2 Emissio from Powerplants
+subtitle    : 
+author      : Jianhua Hunag
+job         : 
+framework   : landslide        # {io2012, html5slides, shower, dzslides, landslide ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+### CO2 Emission from Powerplants
+Jianhua Huang
+
+---
+
+## Load library and process data
+```{r,message=FALSE,warning=FALSE}
+load('/NAS/jhuang/course/coursea//DevelopingDataProducts/devproj/global.rda')
+library(googleVis);library(reshape2);library(knitr)
+
+dt.EC <- subset(EIA_CAMD2002, County == 'Salt Lake')
+dt.EC.L <- cbind(dt.EC, LatLong=paste(dt.EC$Latitude,dt.EC$Longitude,sep=':'))
+
+dt.CA <- subset(CA2002, County== 'Salt Lake')
+dt.CHL <- subset(CHL2002, ORISPL%in%dt.CA$ORISPL)
+
+dt.E <- subset(E2002, COUNTY == 'Salt Lake')
+dt.E.t <- reshape(dt.E[, 1:19], direction = 'long', varying = list(8:19), 
+                  v.names= 'CO2_ton', timevar= 'Month', 
+                  idvar = colnames(dt.E)[1:7])
+dt.E <- data.frame(Year_Mon = as.Date(paste(2002, dt.E.t$Month, '01', sep = '-')),
+                    dt.E.t[,-1])
+```
+
+---
+
+## Powerplants in Salt Lake: Overview
+```{r,echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+# load('/NAS/jhuang/course/coursea//DevelopingDataProducts/devproj/global.rda')
+# library(googleVis);library(reshape2);library(knitr)
+# 
+# dt.EC <- subset(EIA_CAMD2002, County == 'Salt Lake')
+# dt.EC.L <- cbind(dt.EC, LatLong = paste(dt.EC$Latitude, dt.EC$Longitude, sep = ':'))
+
+GEC<- gvisMap(dt.EC.L, 'LatLong', c('Plant Name'),
+        options=list(showTip=TRUE, enableScrollWheel=TRUE,
+                     heigth = 800, mapType='hybrid'))
+print(GEC, tag = 'chart')
+```
+
+---
+
+## Powerplants in Salt Lake: Hourly Emission
+```{r,echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+# load('/NAS/jhuang/course/coursea//DevelopingDataProducts/devproj/global.rda')
+# library(googleVis);library(reshape2);library(knitr)
+# 
+# dt.CA <- subset(CA2002, County== 'Salt Lake')
+# dt.CHL <- subset(CHL2002, ORISPL%in%dt.CA$ORISPL)
+
+GC <- gvisAnnotatedTimeLine(data = dt.CHL, datevar = 'POSIX', numvar = 'value', idvar = 'ORISPL',
+                            options = list(width = 800, legendPosition = 'newRow'))
+print(GC, tag = 'chart')
+```
+
+---
+
+## Powerplants in Salt Lake: Monthly Emission
+```{r,echo=FALSE,message=FALSE,warning=FALSE,results='asis'}
+# load('/NAS/jhuang/course/coursea//DevelopingDataProducts/devproj/global.rda')
+# library(googleVis);library(reshape2);library(knitr)
+# dt.E <- subset(E2002, COUNTY == 'Salt Lake')
+# dt.E.t <- reshape(dt.E[, 1:19], direction = 'long', varying = list(8:19), 
+#                         v.names= 'CO2_ton', timevar= 'Month', idvar = colnames(dt.E)[1:7])
+# dt.E <- data.frame(Year_Mon = as.Date(paste(2002, dt.E.t$Month, '01', sep = '-')),
+#                     dt.E.t[,-1])
+GE <- gvisMotionChart(dt.E, idvar = 'PLANT_NAME', timevar = 'Year_Mon', 
+                xvar = 'Month', yvar = 'CO2_ton', colorvar = 'COUNTY')
+print(GE, tag = 'chart')
+```
